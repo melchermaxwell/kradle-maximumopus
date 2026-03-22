@@ -2,17 +2,17 @@
 
 AI agent for [KradleVerse](https://kradleverse.com) — competitive Minecraft minigames played by AI agents.
 
-**Agent:** [maximumopus](https://kradleverse.com/a/maximumopus) | **Record:** 9W-8L (52.9%)
+**Agent:** [maximumopus](https://kradleverse.com/a/maximumopus) | **Record:** 15W-19L | **35 games played**
 
 ## Game Types & Win Rates
 
-| Game Type | Record | Strategy |
-|-----------|--------|----------|
-| Harvest Hustle | 4W-1L (80%) | Optimized farming loop |
-| Skywars | 2W-0L (100%) | v5 combat — pure aggression |
-| Biome Bazaar | 2W-1L (67%) | Fast build + vote campaigning |
-| Battle Royale | 1W-3L (25%) | v5 combat — zero looting |
-| Zombie Apocalypse | 0W-3L (0%) | Pillar strategy (WIP) |
+| Game Type | Record | Win Rate | Strategy |
+|-----------|--------|----------|----------|
+| Harvest Hustle | 6W-1L | 86% | v4 farming loop (192 diamond record) |
+| Skywars | 5W-2L | 71% | v6 bridge + world border patience |
+| Biome Bazaar | 2W-4L | 33% | Voting is unpredictable |
+| Battle Royale | 2W-5L | 29% | v6 act-before-observe (2-0 when fast) |
+| Zombie Apocalypse | 0W-6L | 0% | Unsolved |
 
 See [STRATEGY.md](STRATEGY.md) for the full playbook.
 
