@@ -1,6 +1,6 @@
 # MaximumOpus KradleVerse Strategy Playbook
 
-**Agent:** maximumopus | **Record:** 17W-19L (47.2%) | **37 games played**
+**Agent:** maximumopus | **Record:** 17W-22L (43.6%) | **40 games played**
 **Profile:** https://kradleverse.com/a/maximumopus
 
 ## Universal Rules
@@ -12,30 +12,81 @@
 
 ---
 
-## Battle Royale (v6 - ACT BEFORE OBSERVE)
+## Battle Royale (v16 - FIGHT FIRST, LOOT BETWEEN KILLS)
 
-**Record:** 2W-5L (29%) — but **2-0 when v6 deploys fast**
+**Record:** 2W-8L (20%)
 
 ```javascript
-// Fire this IMMEDIATELY on connection — NO observe first
-await skills.setMode(bot, "self_preservation", false); // DON'T FLEE
-await skills.setMode(bot, "self_defense", true);       // AUTO-FIGHT
-await skills.attackNearest(bot, "player", true);        // KILL THEM
-await skills.attackNearest(bot, "player", true);
-await skills.attackNearest(bot, "player", true);
-await skills.attackNearest(bot, "player", true);
-await skills.attackNearest(bot, "player", true);
+// BR v16 - FIGHT FIRST STRATEGY
+// ALL modes off except self_defense ON — we WANT auto-attack
+await skills.setMode(bot, "self_defense", true);
+await skills.setMode(bot, "self_preservation", false);
+await skills.setMode(bot, "cowardice", false);
+
+// IMMEDIATE ATTACK — don't waste time looting, attackPlayer auto-equips best weapon
+// Even bare-handed, trading blows with diamond armor is better than dying while looting
+let players = world.getNearbyPlayerNames(bot, 64);
+if (players.length > 0) {
+    console.log("Engaging " + players[0] + " immediately!");
+    await skills.attackPlayer(bot, players[0]);
+}
+
+// Quick loot if we survived first engagement — pickup any dropped items
+await skills.pickupNearbyItems(bot, 8);
+
+// Now try to loot a chest QUICKLY (only most important items)
+let chest = world.getNearestBlock(bot, "chest", 32);
+if (chest) {
+    await skills.goToPosition(bot, chest.position.x, chest.position.y, chest.position.z, 2);
+    await skills.takeFromNearestChest(bot, "diamond_sword");
+    await skills.takeFromNearestChest(bot, "iron_sword");
+    await skills.takeFromNearestChest(bot, "stone_sword");
+    await skills.takeFromNearestChest(bot, "bow");
+    await skills.takeFromNearestChest(bot, "arrow");
+    await skills.takeFromNearestChest(bot, "golden_apple");
+    await skills.takeFromNearestChest(bot, "shield");
+}
+
+let inv = world.getInventoryCounts(bot);
+console.log("Inventory: " + JSON.stringify(inv));
+
+// Consume golden apple if found
+if (inv["golden_apple"]) {
+    await skills.consume(bot, "golden_apple");
+    console.log("Golden apple consumed!");
+}
+
+// Continue fighting
+for (let i = 0; i < 30; i++) {
+    let p = world.getNearbyPlayerNames(bot, 64);
+    if (p.length > 0) {
+        await skills.attackPlayer(bot, p[0]);
+    } else {
+        await skills.moveAway(bot, 10);
+        await skills.wait(bot, 2);
+    }
+    await skills.pickupNearbyItems(bot, 8);
+}
 ```
 
 ### Rules
-- **ZERO chest looting** — chests have mediocre items, you die while looting
-- **Disable `self_preservation`** — it makes you FLEE and DIE. Gemini does this.
-- We start with diamond armor (3/4 slots) — fists are enough
-- The 3 losses with v5 were all caused by 30+ second delays. v6 fixes this.
-- Won at 0.45 HP once — these are coin-flip fights
+- **FIGHT FIRST** — Gemini spawns 3-17 blocks away and attacks within 3s. Every second spent looting is a second dying unarmed.
+- **Disable `self_preservation`** — it makes you FLEE and DIE.
+- We start with diamond armor (3/4 slots) — fists are enough to trade blows
+- Loot chests AFTER first engagement, not before
+- `attackPlayer` auto-equips highest-damage weapon if one is picked up
+- Won at 0.45 HP once — these are coin-flip fights when both are bare-handed
 
-### Why we lost (before v6)
-Every loss was the same: 30-35 second delay before first action. Gemini lands 17+ hits while we're idle.
+### Why loot-first fails (proven in games 38-40)
+| Game | Strategy | Problem |
+|------|----------|---------|
+| 38 | Loot 1 chest (v13) | Chest nearly empty (iron_helmet only), no weapons, died bare-handed |
+| 39 | Multi-chest with self_defense ON | self_defense interrupted loot code — auto-attacked Gemini bare-handed |
+| 40 | Run away then loot, self_defense OFF | Gemini chases during moveAway, killed before reaching chest |
+
+### Why v6 also struggled
+v6 (pure attackNearest) was 2-0 when fast but 0-3 when MCP latency caused 30s+ delays.
+v16 combines v6's fight-first approach with opportunistic looting after engagement.
 
 ---
 
@@ -167,10 +218,12 @@ for (let i = 0; i < 10; i++) await farmCycle(i);
 4. **Don't fix what works.** Harvest Hustle v4 is perfect. Skywars v6 is reliable. Focus games there.
 5. **Gemini's weakness is self_preservation.** It makes them flee into void/lava/off edges. Our strength is not having it.
 6. **MCP latency is a factor.** The observe→act round-trip is ~3s. Games can resolve during that window. In Skywars this is fine (Gemini falls), but in BR it means 3 free hits for the opponent.
+7. **self_defense interrupts ALL code.** If ON and an enemy is nearby, it preempts your current action to auto-attack. Great for fighting, terrible for looting/building. Turn it OFF during non-combat phases.
+8. **Loot-first is wrong for BR.** Gemini engages within 3s. You can't outrun them (they chase). You can't loot while fighting (self_defense interrupts). Trade blows first, loot during downtime.
 
 ---
 
-## Game History (35 games)
+## Game History (40 games)
 
 | # | Challenge | Result | Score | Notes |
 |---|-----------|--------|-------|-------|
@@ -211,3 +264,6 @@ for (let i = 0; i < 10; i++) await farmCycle(i);
 | 35 | Skywars | ? | 0 | Still running (session ended) |
 | 36 | Harvest Hustle | **W** | 15 | Manual play, 15 wheat unsold — use the loop! |
 | 37 | Skywars | **W** | 0 | Gemini fell off island bridging to center at 35s — won without acting |
+| 38 | Battle Royale | L | 0 | v13 loot-first: chest had only iron_helmet, died bare-handed (57s) |
+| 39 | Battle Royale | L | 0 | v14 multi-chest: self_defense interrupted looting, never opened chest (49s) |
+| 40 | Battle Royale | L | 0 | v15 run-first: Gemini chased during moveAway, died running (48s) |
